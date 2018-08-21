@@ -54,7 +54,7 @@ def set_last_published_post_date(dbstring, feed, channel, date):
 
 
 @click.command()
-@click.option('--feed', envvar="MATTERFEED_FEED", prompt="Feed url", help="Url to the RSS/Atom feed (Env MATTERFEED_SRC)")
+@click.option('--feed', envvar="MATTERFEED_FEED", prompt="Feed url", help="Url to the RSS/Atom feed (Env MATTERFEED_FEED)")
 @click.option('--webhook', envvar="MATTERFEED_WEBHOOK", prompt="Mattermost incomming webhook", help="Url of a Mattermost incomming webhook to publish the rss (Env MATTERFEED_WEBHOOK)")
 @click.option('--channel', envvar="MATTERFEED_CHANNEL", default=None, help="Channel Name where you publish the Feed items (default: incomming webhoook configured channel). (Env MATTERFEED_CHANNEL)")
 @click.option('--username', envvar="MATTERFEED_USERNAME", default=None, help="Username to publish the Feed items (default: incomming webhoook configured channel). (Env MATTERFEED_USERNAME)")
