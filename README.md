@@ -17,7 +17,7 @@ Run with docker
 You can run directly with docker using:
 
 ```sh
-docker run -v matterfeed.db:matterfeed.db \
+docker run -e MATTERFEED_DB="postgres://dbname=matterfeed host=my-postgre-server user=my-username password=my-password"
            -e MATTERFEED_FEED=<your-feed-url> \
            -e MATTERFEED_WEBHOOK=<your-incomming-webhook-url> \
            --rm --name matterfeed jespino/matterfeed

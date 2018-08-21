@@ -17,15 +17,40 @@ def entry_to_payload(entry, channel, username, icon_url):
         "text": "\n\n".join([header, date, body])
     }
 
-def get_last_published_post_date(dbstring, feed):
+
+def get_last_published_post_date(dbstring, feed, channel):
+    key = "{}-{}".format(feed, channel)
     if dbstring.startswith("file://"):
         with dbm.open(dbstring[7:], 'r') as db:
-            return float(db[feed]) or 0
+            return float(db[key]) or 0
 
-def set_last_published_post_date(dbstring, feed, date):
+    if dbstring.startswith("postgres://"):
+        import psycopg2
+        conn = psycopg2.connect(dbstring[11:])
+        cur = conn.cursor()
+        cur.execute("SELECT date FROM matterfeed WHERE feed=%s", (key,))
+        feed_date = cur.fetchone()
+        return feed_date[0]
+
+
+def set_last_published_post_date(dbstring, feed, channel, date):
+    key = "{}-{}".format(feed, channel)
     if dbstring.startswith("file://"):
         with dbm.open(dbstring[7:], 'c') as db:
-            db[feed] = str(date)
+            db[key] = str(date)
+
+    if dbstring.startswith("postgres://"):
+        import psycopg2
+        conn = psycopg2.connect(dbstring[11:])
+        cur = conn.cursor()
+        cur.execute(
+            "CREATE TABLE IF NOT EXISTS matterfeed(feed varchar UNIQUE, date float);")
+        cur.execute("UPDATE matterfeed SET date=%s WHERE feed=%s", (date, key))
+        cur.execute(
+            "INSERT INTO matterfeed (feed, date) SELECT %s, %s WHERE NOT EXISTS (SELECT 1 FROM matterfeed WHERE feed=%s)", (key, date, key))
+        conn.commit()
+        cur.close()
+        conn.close()
 
 
 @click.command()
@@ -39,7 +64,7 @@ def set_last_published_post_date(dbstring, feed, date):
 @click.option('--db', envvar="MATTERFEED_DB", default="file://matterfeed.db", help="DB used to store the most recent published post date (Env MATTERFEED_DB)")
 def matterfeed(feed, webhook, channel, username, icon_url, interval, start_date, db):
     try:
-        last_published_post = get_last_published_post_date(db, feed)
+        last_published_post = get_last_published_post_date(db, feed, channel)
     except Exception:
         last_published_post = start_date
 
@@ -50,10 +75,11 @@ def matterfeed(feed, webhook, channel, username, icon_url, interval, start_date,
             if (time.mktime(entry['published_parsed']) > last_published_post):
                 payload = entry_to_payload(entry, channel, username, icon_url)
                 requests.post(webhook, json=payload)
-                max_post_date = max(time.mktime(entry['published_parsed']), max_post_date)
+                max_post_date = max(time.mktime(
+                    entry['published_parsed']), max_post_date)
 
         last_published_post = max(max_post_date, last_published_post)
-        set_last_published_post_date(db, feed, last_published_post)
+        set_last_published_post_date(db, feed, channel, last_published_post)
         time.sleep(interval)
 
 
