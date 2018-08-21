@@ -3,6 +3,7 @@ import click
 import requests
 import time
 import tomd
+import dbm
 
 
 def entry_to_payload(entry, channel, username, icon_url):
@@ -16,18 +17,29 @@ def entry_to_payload(entry, channel, username, icon_url):
         "text": "\n\n".join([header, date, body])
     }
 
+def get_last_published_post_date(dbstring, feed):
+    if dbstring.startswith("file://"):
+        with dbm.open(dbstring[7:], 'r') as db:
+            return float(db[feed]) or 0
+
+def set_last_published_post_date(dbstring, feed, date):
+    if dbstring.startswith("file://"):
+        with dbm.open(dbstring[7:], 'c') as db:
+            db[feed] = str(date)
+
 
 @click.command()
-@click.option('--feed', envvar="MATTERFEED_SRC", prompt="Feed url", help="Url to the RSS/Atom feed (Env MATTERFEED_SRC)")
+@click.option('--feed', envvar="MATTERFEED_FEED", prompt="Feed url", help="Url to the RSS/Atom feed (Env MATTERFEED_SRC)")
 @click.option('--webhook', envvar="MATTERFEED_WEBHOOK", prompt="Mattermost incomming webhook", help="Url of a Mattermost incomming webhook to publish the rss (Env MATTERFEED_WEBHOOK)")
 @click.option('--channel', envvar="MATTERFEED_CHANNEL", default=None, help="Channel Name where you publish the Feed items (default: incomming webhoook configured channel). (Env MATTERFEED_CHANNEL)")
 @click.option('--username', envvar="MATTERFEED_USERNAME", default=None, help="Username to publish the Feed items (default: incomming webhoook configured channel). (Env MATTERFEED_USERNAME)")
 @click.option('--icon-url', envvar="MATTERFEED_ICON_URL", default=None, help="Icon url to publish the Feed items (default: incomming webhoook configured channel). (Env MATTERFEED_ICON_URL)")
 @click.option('--interval', envvar="MATTERFEED_INTERVAL", default=300, help="Number of seconds between checks for updates (default: 300 secons) (Env MATTERFEED_INTERVAL)")
 @click.option('--start-date', envvar="MATTERFEED_START_DATE", default=0, help="Only load posts after this Unix EPOCH (default: 0 or last published post) (Env MATTERFEED_START_DATE)")
-def matterfeed(feed, webhook, channel, username, icon_url, interval, start_date):
+@click.option('--db', envvar="MATTERFEED_DB", default="file://matterfeed.db", help="DB used to store the most recent published post date (Env MATTERFEED_DB)")
+def matterfeed(feed, webhook, channel, username, icon_url, interval, start_date, db):
     try:
-        last_published_post = float(open("last_published_post", "r").read())
+        last_published_post = get_last_published_post_date(db, feed)
     except Exception:
         last_published_post = start_date
 
@@ -41,9 +53,7 @@ def matterfeed(feed, webhook, channel, username, icon_url, interval, start_date)
                 max_post_date = max(time.mktime(entry['published_parsed']), max_post_date)
 
         last_published_post = max(max_post_date, last_published_post)
-        open("last_published_post", "w").write(
-            "{}".format(last_published_post)
-        )
+        set_last_published_post_date(db, feed, last_published_post)
         time.sleep(interval)
 
 
