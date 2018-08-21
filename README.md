@@ -18,9 +18,9 @@ You can run directly with docker using:
 
 ```sh
 docker run -v last_published_post:last_published_post \
-           --rm --name matterfeed jespino/matterfeed python matterfeed.py \
-           --feed <your-feed-url> \
-           --webhook <your-incomming-webhook-url>
+           -e MATTERFEED_FEED=<your-feed-url> \
+           -e MATTERFEED_WEBHOOK=<your-incomming-webhook-url> \
+           --rm --name matterfeed jespino/matterfeed
 ```
 
 You can see the entire help using:

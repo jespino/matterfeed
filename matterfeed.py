@@ -18,13 +18,13 @@ def entry_to_payload(entry, channel, username, icon_url):
 
 
 @click.command()
-@click.option('--feed', prompt="Feed url", help="Url to the RSS/Atom feed")
-@click.option('--webhook', prompt="Mattermost incomming webhook", help="Url of a Mattermost incomming webhook to publish the rss")
-@click.option('--channel', default=None, help="Channel Name where you publish the Feed items (default: incomming webhoook configured channel).")
-@click.option('--username', default=None, help="Username to publish the Feed items (default: incomming webhoook configured channel).")
-@click.option('--icon-url', default=None, help="Icon url to publish the Feed items (default: incomming webhoook configured channel).")
-@click.option('--interval', default=300, help="Number of seconds between checks for updates (default: 300 secons)")
-@click.option('--start-date', default=0, help="Only load posts after this Unix EPOCH (default: 0 or last published post)")
+@click.option('--feed', envvar="MATTERFEED_SRC", prompt="Feed url", help="Url to the RSS/Atom feed (Env MATTERFEED_SRC)")
+@click.option('--webhook', envvar="MATTERFEED_WEBHOOK", prompt="Mattermost incomming webhook", help="Url of a Mattermost incomming webhook to publish the rss (Env MATTERFEED_WEBHOOK)")
+@click.option('--channel', envvar="MATTERFEED_CHANNEL", default=None, help="Channel Name where you publish the Feed items (default: incomming webhoook configured channel). (Env MATTERFEED_CHANNEL)")
+@click.option('--username', envvar="MATTERFEED_USERNAME", default=None, help="Username to publish the Feed items (default: incomming webhoook configured channel). (Env MATTERFEED_USERNAME)")
+@click.option('--icon-url', envvar="MATTERFEED_ICON_URL", default=None, help="Icon url to publish the Feed items (default: incomming webhoook configured channel). (Env MATTERFEED_ICON_URL)")
+@click.option('--interval', envvar="MATTERFEED_INTERVAL", default=300, help="Number of seconds between checks for updates (default: 300 secons) (Env MATTERFEED_INTERVAL)")
+@click.option('--start-date', envvar="MATTERFEED_START_DATE", default=0, help="Only load posts after this Unix EPOCH (default: 0 or last published post) (Env MATTERFEED_START_DATE)")
 def matterfeed(feed, webhook, channel, username, icon_url, interval, start_date):
     try:
         last_published_post = float(open("last_published_post", "r").read())
