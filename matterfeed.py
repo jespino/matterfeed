@@ -2,14 +2,14 @@ import feedparser
 import click
 import requests
 import time
-import tomd
+import html2text
 import dbm
 
 
 def entry_to_payload(entry, channel, username, icon_url):
-    header = "#### [{}]({})".format(entry['title'], entry['link'])
+    header = "#### [{}]({})".format(html2text.html2text(entry['title']), entry['link'])
     date = "Published: _{}_".format(entry['published'])
-    body = tomd.convert(entry['description'])
+    body = html2text.html2text(entry['description'] or entry['summary'] or "")
     return {
         "channel": channel,
         "username": username,
