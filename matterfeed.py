@@ -7,7 +7,7 @@ import dbm
 
 
 def entry_to_payload(entry, channel, username, icon_url):
-    header = "#### [{}]({})".format(html2text.html2text(entry['title']), entry['link'])
+    header = "#### [{}]({})".format(html2text.html2text(entry['title']).replace('\n', ''), entry['link'])
     date = "Published: _{}_".format(entry['published'])
     body = html2text.html2text(entry['description'] or entry['summary'] or "")
     return {
